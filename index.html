@@ -5,7 +5,7 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title id="pageTitle"></title>
   <!-- ======================= 게임 설정 및 문제 데이터 (최상단 배치) ======================= -->
-  <script>
+   <script>
   /* 게임 설정 및 문제 데이터 */
   const gameConfig = {
     "gameTitle": "로그방정식과 로그부등식",
@@ -759,25 +759,24 @@
       transition: all 0.05s ease;
     }
     .btn:disabled {
-      background-color: var(--disabled-color);
       cursor: not-allowed;
       transform: translateY(1px);      /* 음각 효과 */
+      filter: grayscale(40%) brightness(95%);  /* 모든 버튼에 동일한 회색조와 밝기 감소 적용 */
+      opacity: 0.7;                   /* 모든 버튼에 동일한 투명도 적용 */
       box-shadow:
         0 0 0 1px rgba(0,0,0,0.1),
         0 1px 0 rgba(0,0,0,0.1),
-        0 2px 0 #aaa,              /* 줄어든 그림자 */
-        0 0 3px rgba(0,0,0,0.1);
-      opacity: 0.7;                   /* 투명도 추가 */
-      filter: grayscale(40%);        /* 그레이스케일 적용 */
-      text-shadow: none;              /* 텍스트 그림자 제거 */
+        0 2px 0 rgba(0,0,0,0.1);    /* 그림자 효과 감소 */
+      text-shadow: none;             /* 텍스트 그림자 제거 */
+      transition: all 0.2s ease;     /* 부드러운 전환 효과 */
     }
     .btn:disabled:hover {
-      transform: translateY(1px);     /* hover 효과 제거 */
+      transform: translateY(1px);    /* hover 효과 제거 */
       box-shadow:
         0 0 0 1px rgba(0,0,0,0.1),
         0 1px 0 rgba(0,0,0,0.1),
-        0 2px 0 #aaa,
-        0 0 3px rgba(0,0,0,0.1);
+        0 2px 0 rgba(0,0,0,0.1);    /* hover 시에도 동일한 그림자 유지 */
+      filter: grayscale(40%) brightness(95%);  /* hover 시에도 동일한 효과 유지 */
     }
     #startButton {
       background-color: var(--start-button-color);
@@ -1887,7 +1886,7 @@
     const userAnswer = selectedOption.getAttribute('data-option'); // 선택한 옵션의 번호 (1, 2, 3...)
 
     if(Array.isArray(q.answer) && q.answer.length > 1) {
-      /* 복수 선택 로직 */
+      /* 복수 선택 로직 - 기존과 동일하게 유지 */
       if(selectedOptions.includes(userAnswer)) {
         selectedOptions = selectedOptions.filter(opt => opt !== userAnswer);
         selectedOption.classList.remove("selected");
@@ -1900,18 +1899,11 @@
       const confirmBtn = document.getElementById('checkButton');
       if(confirmBtn) { confirmBtn.disabled = (selectedOptions.length === 0); }
     } else {
-      /* 단일 선택 로직 - 바로 정답 확인 */
+      /* 단일 선택 로직 - 휘매쓰 학습용 방식으로 수정 */
       answerSubmitted = true;
-      let isCorrect;
-
-      // q.answer가 배열 형태일 수도 있고, 단일 값일 수도 있음을 고려
-      if (Array.isArray(q.answer)) {
-          // answer가 배열이면 첫 번째 요소와 비교 (또는 문제 정의에 따라 다른 로직 적용)
-          isCorrect = (userAnswer === q.answer[0].toString());
-      } else {
-          // answer가 단일 값이면 직접 비교
-          isCorrect = (userAnswer === q.answer.toString());
-      }
+      
+      // 답안 비교 로직 수정
+      const isCorrect = userAnswer === String(q.answer);
 
       if(isCorrect) {
         /* 정답인 경우 */
@@ -1927,19 +1919,14 @@
       userAnswers.push({
         questionId: q.id,
         userAnswer: userAnswer,
-        correctAnswer: q.answer, // 원본 정답 형태 유지
+        correctAnswer: q.answer,
         isCorrect: isCorrect,
         score: isCorrect ? (q.score || defaultScore) : 0
       });
 
-      elements.nextButton.disabled = false; /* 다음문제 버튼 활성화 */
-      // Disable all options after selection
+      elements.nextButton.disabled = false;
       document.querySelectorAll('.option').forEach(opt => {
-          opt.style.pointerEvents = 'none';
-          // Make unselected options slightly transparent for visual feedback
-          if (!opt.classList.contains('selected') && !opt.classList.contains('correct') && !opt.classList.contains('incorrect')) {
-              // opt.style.opacity = '0.6'; // 필요시 활성화
-          }
+        opt.style.pointerEvents = 'none';
       });
     }
   }
@@ -2032,48 +2019,43 @@
     let isCorrectOverall = true;
     let userAnswerArray = [];
 
-    /* 각 입력 필드별 정답 확인 */
+    /* 각 입력 필드별 정답 확인 - 휘매쓰 학습용 방식으로 수정 */
     inputs.forEach((input, index) => {
-      // Normalize user answer: trim whitespace, convert to lowercase
-      const userAns = input.value.trim().toLowerCase().replace(/\s+/g, '');
-      userAnswerArray.push(input.value.trim()); // Store original trimmed value for logging
+        const userAns = input.value.trim();
+        userAnswerArray.push(userAns);
 
-      let correctAnsNormalized = "";
-      // Determine the correct answer for this input field
-      // q.answer가 배열일 수도, 단일 값일 수도 있음을 고려
-      const correctAnsRaw = Array.isArray(q.answer) ? q.answer[index] : q.answer;
-
-      if (correctAnsRaw !== undefined && correctAnsRaw !== null) {
-           // Normalize correct answer: convert to string, trim, lowercase, remove spaces
-           correctAnsNormalized = correctAnsRaw.toString().trim().toLowerCase().replace(/\s+/g, '');
-      }
-
-      // Compare normalized answers
-      if(userAns !== correctAnsNormalized) {
-        isCorrectOverall = false;
-        input.classList.add('incorrect');
-      } else {
-        input.classList.add('correct');
-      }
-      input.readOnly = true; // Make input read-only after checking
+        const correctAns = Array.isArray(q.answer) ? String(q.answer[index]) : String(q.answer);
+        
+        if(userAns !== correctAns) {
+            isCorrectOverall = false;
+            input.classList.add('incorrect');
+        } else {
+            input.classList.add('correct');
+        }
+        input.readOnly = true;  // 입력 필드 비활성화
     });
 
     if(isCorrectOverall) {
-      /* 정답인 경우 */
-      score += q.score || defaultScore;
-      elements.currentScore.textContent = score;
+        /* 정답인 경우 */
+        score += q.score || defaultScore;
+        elements.currentScore.textContent = score;
     }
 
-    /* 다음 버튼 활성화 */
+    /* 다음 버튼 활성화, 확인 버튼 비활성화 */
     elements.nextButton.disabled = false;
+    const checkButton = document.getElementById('checkButton');
+    if(checkButton) {
+        checkButton.disabled = true;
+        checkButton.style.pointerEvents = 'none';  // 클릭 이벤트도 완전히 차단
+    }
 
     /* 사용자 답변 기록 */
     userAnswers.push({
-      questionId: q.id,
-      userAnswer: userAnswerArray,
-      correctAnswer: q.answer,
-      isCorrect: isCorrectOverall,
-      score: isCorrectOverall ? (q.score || defaultScore) : 0
+        questionId: q.id,
+        userAnswer: userAnswerArray,
+        correctAnswer: q.answer,
+        isCorrect: isCorrectOverall,
+        score: isCorrectOverall ? (q.score || defaultScore) : 0
     });
   }
 
@@ -2182,6 +2164,7 @@
         game: game,
         name: player,
         score: parseInt(finalScoreValue, 10),
+        maxScore: questions.length * 10, // 만점 정보 추가
         elapsedTime: parseInt(finalElapsedTimeValue, 10)
       };
 
